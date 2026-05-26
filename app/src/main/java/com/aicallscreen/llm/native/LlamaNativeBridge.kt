@@ -19,10 +19,21 @@ class LlamaNativeBridge {
 
     fun evaluate(transcript: String): String = nativeEvaluate(transcript)
 
+    fun evaluateDialog(
+        callerTranscript: String,
+        historyJson: String,
+        mode: String,
+    ): String = nativeEvaluateDialog(callerTranscript, historyJson, mode)
+
     fun release() = nativeRelease()
 
     private external fun nativeInit(modelPath: String): Boolean
     private external fun nativeEvaluate(transcript: String): String
+    private external fun nativeEvaluateDialog(
+        callerTranscript: String,
+        historyJson: String,
+        mode: String,
+    ): String
     private external fun nativeRelease()
 
     companion object {

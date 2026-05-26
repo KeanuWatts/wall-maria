@@ -1,24 +1,29 @@
 package com.aicallscreen.di
 
 import android.content.Context
+import android.telephony.TelephonyManager
 import androidx.room.Room
 import com.aicallscreen.BuildConfig
 import com.aicallscreen.audio.CallAudioCapture
 import com.aicallscreen.audio.CallAudioFocusManager
+import com.aicallscreen.contacts.ContactResolver
 import com.aicallscreen.data.local.AppDatabase
 import com.aicallscreen.data.local.CallLogDao
 import com.aicallscreen.data.repository.CallLogRepository
+import com.aicallscreen.escalation.UserEscalationManager
 import com.aicallscreen.llm.LLMProvider
+import com.aicallscreen.routing.CallRoutingPolicy
+import com.aicallscreen.screening.ConversationPipeline
+import com.aicallscreen.screening.KnownContactAssistantOrchestrator
+import com.aicallscreen.screening.UnknownCallerConversationOrchestrator
 import com.aicallscreen.stt.WhisperCppEngine
+import com.aicallscreen.telecom.CallControlCoordinator
+import com.aicallscreen.telecom.KnownContactCallWatcher
 import com.aicallscreen.tts.OfflineCallTtsEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-/**
- * Lightweight service locator for components that must be shared across the screening pipeline.
- * Replace with Hilt/Koin when the module graph grows.
- */
 object ServiceLocator {
 
     @Volatile
@@ -54,6 +59,64 @@ object ServiceLocator {
         )
     }
 
+    val contactResolver: ContactResolver by lazy {
+        ContactResolver(appContext)
+    }
+
+    val callRoutingPolicy: CallRoutingPolicy by lazy {
+        CallRoutingPolicy(contactResolver)
+    }
+
+    val callControl: CallControlCoordinator by lazy {
+        CallControlCoordinator(appContext)
+    }
+
+    val userEscalationManager: UserEscalationManager by lazy {
+        UserEscalationManager(appContext)
+    }
+
+    val conversationPipeline: ConversationPipeline by lazy {
+        ConversationPipeline(
+            ttsEngine = ttsEngine,
+            audioCapture = callAudioCapture,
+            speechToTextEngine = speechToTextEngine,
+            llmEngine = llmProvider.activeEngine(),
+        )
+    }
+
+    val unknownCallerOrchestrator: UnknownCallerConversationOrchestrator by lazy {
+        UnknownCallerConversationOrchestrator(
+            scope = screeningScope,
+            audioFocusManager = audioFocusManager,
+            conversationPipeline = conversationPipeline,
+            ttsEngine = ttsEngine,
+            llmEngine = llmProvider.activeEngine(),
+            callLogRepository = callLogRepository,
+            callControl = callControl,
+            userEscalationManager = userEscalationManager,
+        )
+    }
+
+    val knownContactAssistantOrchestrator: KnownContactAssistantOrchestrator by lazy {
+        KnownContactAssistantOrchestrator(
+            scope = screeningScope,
+            audioFocusManager = audioFocusManager,
+            conversationPipeline = conversationPipeline,
+            ttsEngine = ttsEngine,
+            callLogRepository = callLogRepository,
+            callControl = callControl,
+        )
+    }
+
+    val knownContactCallWatcher: KnownContactCallWatcher by lazy {
+        KnownContactCallWatcher(
+            context = appContext,
+            scope = screeningScope,
+            telephonyManager = appContext.getSystemService(TelephonyManager::class.java),
+            assistantOrchestrator = knownContactAssistantOrchestrator,
+        )
+    }
+
     val callLogDao: CallLogDao by lazy {
         database.callLogDao()
     }
@@ -77,6 +140,7 @@ object ServiceLocator {
         synchronized(this) {
             if (initialized) return
             appContext = context.applicationContext
+            knownContactCallWatcher.start()
             initialized = true
         }
     }

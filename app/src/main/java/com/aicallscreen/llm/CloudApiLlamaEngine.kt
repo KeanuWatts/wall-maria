@@ -1,6 +1,9 @@
 package com.aicallscreen.llm
 
 import android.util.Log
+import com.aicallscreen.llm.api.DialogTurnDto
+import com.aicallscreen.llm.api.LlmDialogRequest
+import com.aicallscreen.llm.api.LlmDialogResponse
 import com.aicallscreen.llm.api.LlmEvaluateRequest
 import com.aicallscreen.llm.api.LlmEvaluateResponse
 import com.aicallscreen.llm.api.LlmRestApi
@@ -61,6 +64,53 @@ class CloudApiLlamaEngine(
             evaluateWithKtor(transcript)
         }
 
+    override fun evaluateDialogTurn(
+        callerTranscript: String,
+        history: List<ConversationTurn>,
+        mode: DialogMode,
+        contactDisplayName: String?,
+        ownerDisplayName: String?,
+    ): Deferred<LLMDialogDecision> = scope.async(Dispatchers.IO) {
+        try {
+            val response: LlmDialogResponse = ktorClient.post("${baseUrl.trimEnd('/')}/dialog") {
+                contentType(ContentType.Application.Json)
+                setBody(
+                    LlmDialogRequest(
+                        callerTranscript = callerTranscript,
+                        history = history.map {
+                            DialogTurnDto(role = it.role.name, text = it.text)
+                        },
+                        mode = mode.name,
+                        contactDisplayName = contactDisplayName,
+                        ownerDisplayName = ownerDisplayName,
+                    ),
+                )
+            }.body()
+            DialogDecisionParser.fromJson(
+                """{"action":"${response.action}","replyToSpeak":"${response.replyToSpeak}","thoughts":"${response.thoughts}"}""",
+                callerTranscript,
+            ) ?: LLMDialogDecision(
+                action = ScreeningAction.CONTINUE_DIALOG,
+                replyToSpeak = response.replyToSpeak,
+                thoughts = response.thoughts,
+            )
+        } catch (error: Exception) {
+            Log.w(TAG, "Cloud dialog failed; using heuristics", error)
+            when (mode) {
+                DialogMode.UNKNOWN_SCREENING -> DialogHeuristics.unknownScreening(
+                    callerTranscript = callerTranscript,
+                    history = history,
+                    turnIndex = history.count { it.role == ConversationTurn.Role.AI },
+                )
+                DialogMode.KNOWN_CONTACT_VOICEMAIL -> DialogHeuristics.knownVoicemail(
+                    callerTranscript = callerTranscript,
+                    history = history,
+                    ownerDisplayName = ownerDisplayName ?: "They",
+                )
+            }
+        }
+    }
+
     private suspend fun evaluateWithKtor(transcript: String): LLMDecision = withContext(Dispatchers.IO) {
         try {
             val response: LlmEvaluateResponse = ktorClient.post("${baseUrl.trimEnd('/')}/evaluate") {
@@ -95,4 +145,7 @@ class CloudApiLlamaEngine(
 interface LlmRestApi {
     @POST("evaluate")
     suspend fun evaluate(@Body request: LlmEvaluateRequest): LlmEvaluateResponse
+
+    @POST("dialog")
+    suspend fun evaluateDialog(@Body request: LlmDialogRequest): LlmDialogResponse
 }

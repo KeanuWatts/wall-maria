@@ -32,6 +32,22 @@ Java_com_aicallscreen_llm_native_LlamaNativeBridge_nativeEvaluate(
     return env->NewStringUTF(payload.c_str());
 }
 
+JNIEXPORT jstring JNICALL
+Java_com_aicallscreen_llm_native_LlamaNativeBridge_nativeEvaluateDialog(
+    JNIEnv *env,
+    jobject thiz,
+    jstring caller_transcript,
+    jstring history_json,
+    jstring mode
+) {
+    const char *text = env->GetStringUTFChars(caller_transcript, nullptr);
+    std::string payload = std::string(
+        "{\"action\":\"CONTINUE_DIALOG\",\"replyToSpeak\":\"\",\"thoughts\":\"Native dialog stub for: "
+    ) + text + "\"}";
+    env->ReleaseStringUTFChars(caller_transcript, text);
+    return env->NewStringUTF(payload.c_str());
+}
+
 JNIEXPORT void JNICALL
 Java_com_aicallscreen_llm_native_LlamaNativeBridge_nativeRelease(
     JNIEnv *env,

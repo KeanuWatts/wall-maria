@@ -46,13 +46,20 @@ Link `whisper.cpp` and `llama.cpp` in `app/src/main/cpp/CMakeLists.txt`, place G
 ./gradlew :app:assembleDebug
 ```
 
-## Screening flow
+## Call routing
 
-1. `onScreenCall` → `CallResponse` silences ring, allows call.
-2. `CallAudioFocusManager` sets `MODE_IN_COMMUNICATION` without `requestAudioFocus()`.
-3. `TelecomManager.acceptRingingCall()` answers silently.
-4. `OfflineCallTtsEngine` speaks greeting on `USAGE_VOICE_COMMUNICATION`.
-5. `CallAudioCapture` → `WhisperCppEngine.streamAudioToText`.
-6. `LLMProvider.activeEngine().evaluateTranscript` → `LLMDecision`.
-7. `CallLogRepository.persistScreeningEvent` (Room).
-8. If `isSpam`, `TelecomManager.endCall()`.
+| Caller | Ring behavior | AI behavior |
+|--------|---------------|-------------|
+| **Saved contact** | Normal ring (`setSilenceCall(false)`) | If unanswered ~25s → assistant: "*Owner* is not available… Can I take a message?" |
+| **Unknown number** | Silent (`setSilenceCall(true)`) | Multi-turn AI dialog → block spam **or** ring you via `UserEscalationManager` |
+
+## Unknown caller flow
+
+1. Silence ring → auto-answer → multi-turn TTS/STT/LLM loop (`ConversationPipeline`).
+2. `CONNECT_TO_USER` → speak hold message → local ringtone + full-screen notification (does not pause Spotify).
+3. Tap notification → `EscalationTrampolineActivity` → system dialer for the live call.
+4. `BLOCK_CALL` → speak goodbye → `endCall()`.
+
+## Permissions
+
+Grant on first launch: `READ_CONTACTS` (known vs unknown), `READ_PHONE_STATE`, `ANSWER_PHONE_CALLS`, `RECORD_AUDIO`, `POST_NOTIFICATIONS` (escalation ring).

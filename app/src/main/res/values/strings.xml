@@ -3,4 +3,11 @@
     <string name="app_name">AI Call Screening</string>
     <string name="call_log_title">Screening History</string>
     <string name="default_tts_greeting">Please state the purpose of your call for AI screening.</string>
+    <string name="default_user_name">the owner</string>
+    <string name="escalation_channel_name">Screened calls</string>
+    <string name="escalation_channel_description">Alerts when a screened caller is approved</string>
+    <string name="escalation_notification_title">Screened call waiting</string>
+    <string name="escalation_notification_body">Tap to answer call from %1$s</string>
+    <string name="escalation_action_answer">Answer</string>
+    <string name="permissions_rationale">Contacts, phone, microphone, and notification permissions are required for AI call screening.</string>
 </resources>

@@ -30,6 +30,34 @@ class OnDeviceLlamaEngine(
             parseDecision(json, transcript)
         }
 
+    override fun evaluateDialogTurn(
+        callerTranscript: String,
+        history: List<ConversationTurn>,
+        mode: DialogMode,
+        contactDisplayName: String?,
+        ownerDisplayName: String?,
+    ): Deferred<LLMDialogDecision> = scope.async(Dispatchers.Default) {
+        val historyJson = history.joinToString("|") { "${it.role}:${it.text}" }
+        val json = nativeBridge.evaluateDialog(
+            callerTranscript = callerTranscript,
+            historyJson = historyJson,
+            mode = mode.name,
+        )
+        DialogDecisionParser.fromJson(json, callerTranscript)
+            ?: when (mode) {
+                DialogMode.UNKNOWN_SCREENING -> DialogHeuristics.unknownScreening(
+                    callerTranscript = callerTranscript,
+                    history = history,
+                    turnIndex = history.count { it.role == ConversationTurn.Role.AI },
+                )
+                DialogMode.KNOWN_CONTACT_VOICEMAIL -> DialogHeuristics.knownVoicemail(
+                    callerTranscript = callerTranscript,
+                    history = history,
+                    ownerDisplayName = ownerDisplayName ?: "They",
+                )
+            }
+    }
+
     private fun parseDecision(json: String, transcript: String): LLMDecision {
         if (json.isBlank()) {
             return heuristicDecision(transcript)

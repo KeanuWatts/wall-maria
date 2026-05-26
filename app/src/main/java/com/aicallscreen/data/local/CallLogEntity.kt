@@ -16,4 +16,9 @@ data class CallLogEntity(
     val callerTranscript: String,
     val aiThoughts: String,
     val wasBlocked: Boolean,
+    /** [com.aicallscreen.routing.CallRoute] name */
+    val callRoute: String = "",
+    val conversationHistory: String = "",
+    val wasConnectedToUser: Boolean = false,
+    val leftMessage: String = "",
 )

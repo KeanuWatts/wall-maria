@@ -3,12 +3,9 @@ package com.aicallscreen.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 
-/**
- * Thread-safe Room database singleton (constructed via [Room.databaseBuilder] in ServiceLocator).
- */
 @Database(
     entities = [CallLogEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

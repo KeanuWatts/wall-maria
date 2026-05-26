@@ -15,6 +15,10 @@ class CallLogRepository(
         callerTranscript: String,
         aiThoughts: String,
         wasBlocked: Boolean,
+        callRoute: String = "",
+        conversationHistory: String = "",
+        wasConnectedToUser: Boolean = false,
+        leftMessage: String = "",
     ) {
         callLogDao.insertLog(
             CallLogEntity(
@@ -24,6 +28,10 @@ class CallLogRepository(
                 callerTranscript = callerTranscript,
                 aiThoughts = aiThoughts,
                 wasBlocked = wasBlocked,
+                callRoute = callRoute,
+                conversationHistory = conversationHistory,
+                wasConnectedToUser = wasConnectedToUser,
+                leftMessage = leftMessage,
             ),
         )
     }

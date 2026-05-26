@@ -7,12 +7,12 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import com.aicallscreen.R
-import com.aicallscreen.audio.CallAudioFocusManager
 import com.aicallscreen.di.ServiceLocator
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -26,6 +26,7 @@ class OfflineCallTtsEngine(
     private val isReady = AtomicBoolean(false)
     private var textToSpeech: TextToSpeech? = null
     private val initDeferred = CompletableDeferred<Boolean>()
+    private val utteranceCompletions = ConcurrentHashMap<String, CompletableDeferred<Unit>>()
 
     init {
         textToSpeech = TextToSpeech(context.applicationContext) { status ->
@@ -49,7 +50,6 @@ class OfflineCallTtsEngine(
 
         engine.setAudioAttributes(callAttributes)
 
-        // Prefer on-device engine when available (Android 11+).
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             val voices = engine.voices.orEmpty()
             val offlineVoice = voices.firstOrNull { voice ->
@@ -64,38 +64,45 @@ class OfflineCallTtsEngine(
             override fun onStart(utteranceId: String?) = Unit
 
             override fun onDone(utteranceId: String?) {
-                if (utteranceId == UTTERANCE_GREETING) {
-                    greetingDone.complete(Unit)
-                }
+                completeUtterance(utteranceId)
             }
 
             @Deprecated("Deprecated in Java")
             override fun onError(utteranceId: String?) {
-                greetingDone.complete(Unit)
+                completeUtterance(utteranceId)
             }
 
             override fun onError(utteranceId: String?, errorCode: Int) {
                 Log.e(TAG, "TTS error utterance=$utteranceId code=$errorCode")
-                greetingDone.complete(Unit)
+                completeUtterance(utteranceId)
             }
         })
     }
 
-    private var greetingDone = CompletableDeferred<Unit>()
+    private fun completeUtterance(utteranceId: String?) {
+        if (utteranceId == null) return
+        utteranceCompletions.remove(utteranceId)?.complete(Unit)
+    }
 
-    /**
-     * Speaks [text] into the call audio path as soon as TTS is initialized.
-     */
     suspend fun speakGreetingToCall(
         text: String = context.getString(R.string.default_tts_greeting),
+    ): String = speakToCall(text, utteranceId = UTTERANCE_GREETING)
+
+    /**
+     * Speaks [text] into the call audio path and suspends until playback completes.
+     */
+    suspend fun speakToCall(
+        text: String,
+        utteranceId: String = "tts_${System.nanoTime()}",
     ): String = withContext(Dispatchers.Main) {
         if (!initDeferred.await()) {
             Log.w(TAG, "TTS not ready; returning text without playback")
             return@withContext text
         }
 
-        greetingDone = CompletableDeferred()
         val engine = textToSpeech ?: return@withContext text
+        val done = CompletableDeferred<Unit>()
+        utteranceCompletions[utteranceId] = done
 
         val params = Bundle().apply {
             putInt(TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS, 0)
@@ -106,10 +113,10 @@ class OfflineCallTtsEngine(
             text,
             TextToSpeech.QUEUE_FLUSH,
             params,
-            UTTERANCE_GREETING,
+            utteranceId,
         )
 
-        greetingDone.await()
+        done.await()
         text
     }
 
