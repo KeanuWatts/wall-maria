@@ -38,6 +38,12 @@
             android:foregroundServiceType="phoneCall" />
 
         <activity
+            android:name=".ui.RulesActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.CallLogActivity"
+            android:theme="@style/Theme.AiCallScreening" />
+
+        <activity
             android:name=".ui.CallLogActivity"
             android:exported="true"
             android:theme="@style/Theme.AiCallScreening">

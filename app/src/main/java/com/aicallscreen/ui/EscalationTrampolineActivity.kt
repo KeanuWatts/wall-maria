@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.aicallscreen.di.ServiceLocator
+import com.aicallscreen.session.ScreeningSessionManager
 
 /**
  * Transparent activity launched from the escalation notification so the user can
@@ -20,15 +21,21 @@ class EscalationTrampolineActivity : AppCompatActivity() {
         val phoneNumber = intent.getStringExtra(EXTRA_PHONE_NUMBER).orEmpty()
         ServiceLocator.userEscalationManager.stopEscalationRinging()
 
-        try {
-            val showDialer = Intent(Intent.ACTION_DIAL).apply {
-                data = Uri.parse("tel:$phoneNumber")
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        val activeSession = ScreeningSessionManager.activeSession()
+        if (activeSession != null) {
+            startActivity(LiveScreeningActivity.createIntent(this, activeSession.sessionId))
+            Log.i(TAG, "Opened live screening for escalated call")
+        } else {
+            try {
+                val showDialer = Intent(Intent.ACTION_DIAL).apply {
+                    data = Uri.parse("tel:$phoneNumber")
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                startActivity(showDialer)
+                Log.i(TAG, "Opened dialer for screened call $phoneNumber")
+            } catch (error: Exception) {
+                Log.e(TAG, "Failed to open in-call UI", error)
             }
-            startActivity(showDialer)
-            Log.i(TAG, "Opened dialer for screened call $phoneNumber")
-        } catch (error: Exception) {
-            Log.e(TAG, "Failed to open in-call UI", error)
         }
 
         finish()

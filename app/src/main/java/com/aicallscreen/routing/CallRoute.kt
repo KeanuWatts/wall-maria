@@ -9,4 +9,9 @@ enum class CallRoute {
 
     /** Saved contact — normal ring; AI assistant only if user does not answer in time. */
     KNOWN_CONTACT_NORMAL_RING,
+
+    /**
+     * No AI involvement — behave like a normal incoming call (testing / rules bypass).
+     */
+    PASS_THROUGH,
 }

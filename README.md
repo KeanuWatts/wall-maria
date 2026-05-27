@@ -60,6 +60,19 @@ Link `whisper.cpp` and `llama.cpp` in `app/src/main/cpp/CMakeLists.txt`, place G
 3. Tap notification → `EscalationTrampolineActivity` → system dialer for the live call.
 4. `BLOCK_CALL` → speak goodbye → `endCall()`.
 
+## Screening rules (testing)
+
+Open **Screening rules** from the history screen menu.
+
+| Mode | Behavior |
+|------|----------|
+| **Default** | Unknown → AI screening; known → normal ring + assistant if unanswered |
+| **Allowlist only** | Only listed numbers get AI; everyone else uses the normal phone app (safe for testing) |
+| **AI disabled** | No AI at all |
+| **Master switch** | Off = pass-through for every call |
+
+Example test setup: set **Allowlist only**, add one contact → only that person triggers AI; your other calls behave normally.
+
 ## Custom call UI
 
 ### Known contacts — `IncomingCallActivity`

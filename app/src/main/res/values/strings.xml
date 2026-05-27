@@ -32,4 +32,27 @@
     <string name="chat_role_caller">Caller</string>
     <string name="chat_role_system">System</string>
     <string name="takeover_summary">You took over the call from %1$s</string>
+    <string name="rules_title">Screening rules</string>
+    <string name="rules_ai_master_label">Enable AI call handling</string>
+    <string name="rules_ai_master_hint">Turn off to let all calls through your normal phone app with zero AI involvement.</string>
+    <string name="rules_mode_label">Handling mode</string>
+    <string name="rules_mode_default">Default (recommended)</string>
+    <string name="rules_mode_default_hint">Unknown numbers → AI screening. Saved contacts → normal ring, assistant if you don\'t answer.</string>
+    <string name="rules_mode_allowlist">Testing: allowlist only</string>
+    <string name="rules_mode_allowlist_hint">Only contacts below are handled by AI. Everyone else rings normally — no silence, no auto-answer.</string>
+    <string name="rules_mode_disabled">AI disabled</string>
+    <string name="rules_mode_disabled_hint">Same as turning AI off — pass all calls through unchanged.</string>
+    <string name="rules_allowlist_title">AI allowlist</string>
+    <string name="rules_allowlist_hint">Add the contacts or numbers that should use AI while you test.</string>
+    <string name="rules_add_contact">Add from contacts</string>
+    <string name="rules_add_number">Add phone number</string>
+    <string name="rules_remove_contact">Remove from allowlist</string>
+    <string name="rules_phone_hint">Phone number</string>
+    <string name="rules_reset_defaults">Reset to defaults</string>
+    <string name="rules_reset_confirm_title">Reset rules?</string>
+    <string name="rules_reset_confirm_message">Restore default screening behavior and clear the allowlist.</string>
+    <string name="rules_status_master_off">AI off — all calls pass through</string>
+    <string name="rules_status_default">Default rules active</string>
+    <string name="rules_status_allowlist">Testing: %1$d on allowlist</string>
+    <string name="rules_status_disabled">AI disabled</string>
 </resources>

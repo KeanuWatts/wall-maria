@@ -13,6 +13,7 @@ import com.aicallscreen.data.repository.CallLogRepository
 import com.aicallscreen.escalation.UserEscalationManager
 import com.aicallscreen.llm.LLMProvider
 import com.aicallscreen.routing.CallRoutingPolicy
+import com.aicallscreen.rules.ScreeningRulesRepository
 import com.aicallscreen.screening.AssistantHandoffController
 import com.aicallscreen.screening.ConversationPipeline
 import com.aicallscreen.screening.KnownContactAssistantOrchestrator
@@ -65,8 +66,12 @@ object ServiceLocator {
         ContactResolver(appContext)
     }
 
+    val screeningRulesRepository: ScreeningRulesRepository by lazy {
+        ScreeningRulesRepository(appContext)
+    }
+
     val callRoutingPolicy: CallRoutingPolicy by lazy {
-        CallRoutingPolicy(contactResolver)
+        CallRoutingPolicy(contactResolver, screeningRulesRepository)
     }
 
     val callControl: CallControlCoordinator by lazy {

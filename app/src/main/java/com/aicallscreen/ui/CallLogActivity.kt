@@ -3,7 +3,10 @@ package com.aicallscreen.ui
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -33,6 +36,20 @@ class CallLogActivity : AppCompatActivity() {
         requestRuntimePermissions()
 
         lifecycleScope.launch {
+            ServiceLocator.screeningRulesRepository.rulesFlow.collectLatest { rules ->
+                val modeLabel = when {
+                    !rules.aiMasterEnabled -> getString(R.string.rules_status_master_off)
+                    rules.globalMode == com.aicallscreen.rules.GlobalScreeningMode.ALLOWLIST_ONLY ->
+                        getString(R.string.rules_status_allowlist, rules.allowlist.size)
+                    rules.globalMode == com.aicallscreen.rules.GlobalScreeningMode.AI_DISABLED ->
+                        getString(R.string.rules_status_disabled)
+                    else -> getString(R.string.rules_status_default)
+                }
+                title = "${getString(R.string.call_log_title)} · $modeLabel"
+            }
+        }
+
+        lifecycleScope.launch {
             ServiceLocator.callLogRepository.observeAllLogs().collectLatest { logs ->
                 val formatted = logs.joinToString(separator = "\n\n") { entry ->
                     buildString {
@@ -57,6 +74,20 @@ class CallLogActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_call_log, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean =
+        when (item.itemId) {
+            R.id.action_rules -> {
+                startActivity(Intent(this, RulesActivity::class.java))
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
 
     private fun requestRuntimePermissions() {
         val required = mutableListOf(

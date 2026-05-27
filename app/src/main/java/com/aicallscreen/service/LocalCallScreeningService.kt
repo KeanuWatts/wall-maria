@@ -18,7 +18,22 @@ class LocalCallScreeningService : CallScreeningService() {
         when (ServiceLocator.callRoutingPolicy.routeFor(phoneNumber)) {
             CallRoute.KNOWN_CONTACT_NORMAL_RING -> handleKnownContact(callDetails, phoneNumber)
             CallRoute.UNKNOWN_AI_SCREENING -> handleUnknownCaller(callDetails)
+            CallRoute.PASS_THROUGH -> handlePassThrough(callDetails)
         }
+    }
+
+    /** Rules/testing bypass — do not silence, answer, or start any AI pipeline. */
+    private fun handlePassThrough(callDetails: Call.Details) {
+        Log.i(TAG, "PASS_THROUGH — AI rules skipped for ${callDetails.handle}")
+        respondToCall(
+            callDetails,
+            CallResponse.Builder()
+                .setDisallowCall(false)
+                .setRejectCall(false)
+                .setSilenceCall(false)
+                .setSkipNotification(false)
+                .build(),
+        )
     }
 
     private fun handleKnownContact(callDetails: Call.Details, phoneNumber: String) {
