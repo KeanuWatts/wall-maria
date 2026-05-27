@@ -10,4 +10,26 @@
     <string name="escalation_notification_body">Tap to answer call from %1$s</string>
     <string name="escalation_action_answer">Answer</string>
     <string name="permissions_rationale">Contacts, phone, microphone, and notification permissions are required for AI call screening.</string>
+    <string name="incoming_call_notification_subtitle">Incoming call</string>
+    <string name="incoming_call_hint">Send to assistant if you cannot answer — they will be offered to leave a message.</string>
+    <string name="incoming_action_answer">Answer</string>
+    <string name="incoming_action_decline">Decline</string>
+    <string name="incoming_action_send_to_assistant">Send to assistant</string>
+    <string name="incoming_answered_summary">You answered the call</string>
+    <string name="live_screening_notification_subtitle">Live AI screening</string>
+    <string name="live_screening_title">Screening: %1$s</string>
+    <string name="live_action_take_over">Take over call</string>
+    <string name="live_status_ai_speaking">AI speaking…</string>
+    <string name="live_status_caller_speaking">Caller speaking…</string>
+    <string name="live_status_listening_done">Processing response…</string>
+    <string name="live_status_takeover">You are taking over this call</string>
+    <string name="live_llm_thoughts">AI: %1$s</string>
+    <string name="live_decision_block">Decision: block call</string>
+    <string name="live_decision_connect">Decision: connect to you</string>
+    <string name="live_decision_message">Decision: take message</string>
+    <string name="live_decision_continue">Decision: ask follow-up</string>
+    <string name="chat_role_ai">AI</string>
+    <string name="chat_role_caller">Caller</string>
+    <string name="chat_role_system">System</string>
+    <string name="takeover_summary">You took over the call from %1$s</string>
 </resources>

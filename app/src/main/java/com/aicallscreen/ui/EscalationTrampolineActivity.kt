@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.telecom.TelecomManager
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.aicallscreen.di.ServiceLocator

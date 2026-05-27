@@ -60,6 +60,20 @@ Link `whisper.cpp` and `llama.cpp` in `app/src/main/cpp/CMakeLists.txt`, place G
 3. Tap notification → `EscalationTrampolineActivity` → system dialer for the live call.
 4. `BLOCK_CALL` → speak goodbye → `endCall()`.
 
+## Custom call UI
+
+### Known contacts — `IncomingCallActivity`
+- **Answer** — normal pickup
+- **Decline** — hang up
+- **Send to assistant** — AI answers: "*{You}* is not available… Can I take a message?" (no need to wait 25s)
+
+### Live screening — `LiveScreeningActivity`
+- Streams AI / caller lines in real time (`ScreeningUiEvent` → chat list)
+- Partial caller transcript updates while they speak
+- **Take over** — stops AI, keeps call connected, opens dialer for you
+
+Shown automatically for unknown screening and whenever the assistant handles a call.
+
 ## Permissions
 
-Grant on first launch: `READ_CONTACTS` (known vs unknown), `READ_PHONE_STATE`, `ANSWER_PHONE_CALLS`, `RECORD_AUDIO`, `POST_NOTIFICATIONS` (escalation ring).
+Grant on first launch: `READ_CONTACTS`, `READ_PHONE_STATE`, `ANSWER_PHONE_CALLS`, `RECORD_AUDIO`, `POST_NOTIFICATIONS`, `USE_FULL_SCREEN_INTENT`.

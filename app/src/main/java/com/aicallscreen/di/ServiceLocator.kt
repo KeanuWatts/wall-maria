@@ -13,9 +13,11 @@ import com.aicallscreen.data.repository.CallLogRepository
 import com.aicallscreen.escalation.UserEscalationManager
 import com.aicallscreen.llm.LLMProvider
 import com.aicallscreen.routing.CallRoutingPolicy
+import com.aicallscreen.screening.AssistantHandoffController
 import com.aicallscreen.screening.ConversationPipeline
 import com.aicallscreen.screening.KnownContactAssistantOrchestrator
 import com.aicallscreen.screening.UnknownCallerConversationOrchestrator
+import com.aicallscreen.screening.UserTakeoverHandler
 import com.aicallscreen.stt.WhisperCppEngine
 import com.aicallscreen.telecom.CallControlCoordinator
 import com.aicallscreen.telecom.KnownContactCallWatcher
@@ -75,6 +77,20 @@ object ServiceLocator {
         UserEscalationManager(appContext)
     }
 
+    val userTakeoverHandler: UserTakeoverHandler by lazy {
+        UserTakeoverHandler(
+            context = appContext,
+            scope = screeningScope,
+            ttsEngine = ttsEngine,
+            audioFocusManager = audioFocusManager,
+            userEscalationManager = userEscalationManager,
+        )
+    }
+
+    val assistantHandoffController: AssistantHandoffController by lazy {
+        AssistantHandoffController(appContext, screeningScope)
+    }
+
     val conversationPipeline: ConversationPipeline by lazy {
         ConversationPipeline(
             ttsEngine = ttsEngine,
@@ -86,6 +102,7 @@ object ServiceLocator {
 
     val unknownCallerOrchestrator: UnknownCallerConversationOrchestrator by lazy {
         UnknownCallerConversationOrchestrator(
+            context = appContext,
             scope = screeningScope,
             audioFocusManager = audioFocusManager,
             conversationPipeline = conversationPipeline,

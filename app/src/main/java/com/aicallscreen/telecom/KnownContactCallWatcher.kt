@@ -7,6 +7,9 @@ import android.telephony.TelephonyManager
 import android.util.Log
 import com.aicallscreen.contacts.PhoneNumberNormalizer
 import com.aicallscreen.screening.KnownContactAssistantOrchestrator
+import com.aicallscreen.session.ScreeningSessionManager
+import com.aicallscreen.session.ScreeningSessionType
+import com.aicallscreen.ui.ScreeningUiLauncher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -43,10 +46,23 @@ class KnownContactCallWatcher(
             val pending = pendingAssistants[phoneNumber] ?: return@launch
             if (!pending.cancelled && telephonyManager.callState == TelephonyManager.CALL_STATE_RINGING) {
                 Log.i(TAG, "Known contact not answered — starting assistant for $contactDisplayName")
+                val session = ScreeningSessionManager.createSession(
+                    phoneNumber = phoneNumber,
+                    displayLabel = contactDisplayName,
+                    sessionType = ScreeningSessionType.KNOWN_ASSISTANT,
+                    ownerDisplayName = ownerDisplayName,
+                    contactDisplayName = contactDisplayName,
+                )
+                ScreeningUiLauncher.showLiveScreening(
+                    context = context,
+                    sessionId = session.sessionId,
+                    displayLabel = contactDisplayName,
+                )
                 assistantOrchestrator.runAssistant(
                     phoneNumber = phoneNumber,
                     contactDisplayName = contactDisplayName,
                     ownerDisplayName = ownerDisplayName,
+                    session = session,
                 )
             }
         }

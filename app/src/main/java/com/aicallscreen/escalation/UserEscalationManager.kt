@@ -83,6 +83,10 @@ class UserEscalationManager(
         notificationManager.cancel(ESCALATION_NOTIFICATION_ID)
     }
 
+    fun ensureNotificationChannel() {
+        createChannelIfNeeded()
+    }
+
     private fun playLocalRingtone() {
         val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
         val ringtone = RingtoneManager.getRingtone(context, uri) ?: return

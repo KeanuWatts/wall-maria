@@ -120,8 +120,16 @@ class OfflineCallTtsEngine(
         text
     }
 
-    fun shutdown() {
+    fun stopSpeaking() {
         textToSpeech?.stop()
+        utteranceCompletions.values.forEach { deferred ->
+            if (!deferred.isCompleted) deferred.complete(Unit)
+        }
+        utteranceCompletions.clear()
+    }
+
+    fun shutdown() {
+        stopSpeaking()
         textToSpeech?.shutdown()
         textToSpeech = null
     }

@@ -5,4 +5,8 @@
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
     </style>
+    <style name="Theme.AiCallScreening.CallScreen" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:statusBarColor">#0D1117</item>
+        <item name="android:navigationBarColor">#0D1117</item>
+    </style>
 </resources>

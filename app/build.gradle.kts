@@ -70,6 +70,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.lifecycle.runtime.ktx)
+    implementation(libs.androidx.recyclerview)
 
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)

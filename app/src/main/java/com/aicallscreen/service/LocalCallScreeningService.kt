@@ -5,21 +5,17 @@ import android.telecom.CallScreeningService
 import android.util.Log
 import com.aicallscreen.di.ServiceLocator
 import com.aicallscreen.routing.CallRoute
+import com.aicallscreen.session.ScreeningSessionManager
+import com.aicallscreen.session.ScreeningSessionType
+import com.aicallscreen.ui.ScreeningUiLauncher
 
-/**
- * Routes incoming calls:
- * - **Known contacts** → normal ring; assistant if unanswered.
- * - **Unknown numbers** → silent multi-turn AI screening → ring owner or block.
- */
 class LocalCallScreeningService : CallScreeningService() {
 
     override fun onScreenCall(callDetails: Call.Details) {
         val phoneNumber = callDetails.handle?.schemeSpecificPart ?: "unknown"
         Log.i(TAG, "onScreenCall from=$phoneNumber")
 
-        val route = ServiceLocator.callRoutingPolicy.routeFor(phoneNumber)
-
-        when (route) {
+        when (ServiceLocator.callRoutingPolicy.routeFor(phoneNumber)) {
             CallRoute.KNOWN_CONTACT_NORMAL_RING -> handleKnownContact(callDetails, phoneNumber)
             CallRoute.UNKNOWN_AI_SCREENING -> handleUnknownCaller(callDetails)
         }
@@ -29,14 +25,31 @@ class LocalCallScreeningService : CallScreeningService() {
         val contactName = ServiceLocator.contactResolver.displayNameFor(phoneNumber) ?: phoneNumber
         val ownerName = ServiceLocator.contactResolver.ownerDisplayName()
 
-        val response = CallResponse.Builder()
-            .setDisallowCall(false)
-            .setRejectCall(false)
-            .setSilenceCall(false)
-            .setSkipNotification(false)
-            .build()
+        respondToCall(
+            callDetails,
+            CallResponse.Builder()
+                .setDisallowCall(false)
+                .setRejectCall(false)
+                .setSilenceCall(false)
+                .setSkipNotification(false)
+                .build(),
+        )
 
-        respondToCall(callDetails, response)
+        val session = ScreeningSessionManager.createSession(
+            phoneNumber = phoneNumber,
+            displayLabel = contactName,
+            sessionType = ScreeningSessionType.INCOMING_KNOWN_RINGING,
+            ownerDisplayName = ownerName,
+            contactDisplayName = contactName,
+        )
+
+        ScreeningUiLauncher.showIncomingCallScreen(
+            context = applicationContext,
+            sessionId = session.sessionId,
+            phoneNumber = phoneNumber,
+            displayName = contactName,
+            ownerDisplayName = ownerName,
+        )
 
         ServiceLocator.knownContactCallWatcher.scheduleNoAnswerAssistant(
             phoneNumber = phoneNumber,
@@ -48,14 +61,15 @@ class LocalCallScreeningService : CallScreeningService() {
     private fun handleUnknownCaller(callDetails: Call.Details) {
         val phoneNumber = callDetails.handle?.schemeSpecificPart ?: "unknown"
 
-        val response = CallResponse.Builder()
-            .setDisallowCall(false)
-            .setRejectCall(false)
-            .setSilenceCall(true)
-            .setSkipNotification(false)
-            .build()
-
-        respondToCall(callDetails, response)
+        respondToCall(
+            callDetails,
+            CallResponse.Builder()
+                .setDisallowCall(false)
+                .setRejectCall(false)
+                .setSilenceCall(true)
+                .setSkipNotification(false)
+                .build(),
+        )
 
         ServiceLocator.unknownCallerOrchestrator.start(phoneNumber)
     }

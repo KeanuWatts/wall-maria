@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0D1117"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/liveCallerLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#161B22"
+        android:padding="16dp"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/liveStatusLine"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#161B22"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="12dp"
+        android:textColor="#8B949E"
+        android:textSize="13sp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/liveTranscriptList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:padding="12dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonTakeOver"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="@string/live_action_take_over"
+        android:textAllCaps="false" />
+</LinearLayout>

@@ -11,6 +11,8 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
 
     <application
         android:name=".AiCallScreeningApplication"
@@ -30,6 +32,11 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".service.ScreeningForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="phoneCall" />
+
         <activity
             android:name=".ui.CallLogActivity"
             android:exported="true"
@@ -39,6 +46,24 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.IncomingCallActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTop"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.AiCallScreening.CallScreen" />
+
+        <activity
+            android:name=".ui.LiveScreeningActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true"
+            android:theme="@style/Theme.AiCallScreening.CallScreen" />
 
         <activity
             android:name=".ui.EscalationTrampolineActivity"

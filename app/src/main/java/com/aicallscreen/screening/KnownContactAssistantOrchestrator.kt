@@ -6,14 +6,15 @@ import com.aicallscreen.data.repository.CallLogRepository
 import com.aicallscreen.llm.DialogMode
 import com.aicallscreen.llm.ScreeningAction
 import com.aicallscreen.routing.CallRoute
+import com.aicallscreen.session.ScreeningSession
+import com.aicallscreen.session.ScreeningSessionManager
+import com.aicallscreen.session.ScreeningSessionType
+import com.aicallscreen.session.ScreeningUiEvent
 import com.aicallscreen.telecom.CallControlCoordinator
 import com.aicallscreen.tts.OfflineCallTtsEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-/**
- * When a saved contact rings but the owner does not answer, the AI assistant takes a message.
- */
 class KnownContactAssistantOrchestrator(
     private val scope: CoroutineScope,
     private val audioFocusManager: CallAudioFocusManager,
@@ -27,16 +28,27 @@ class KnownContactAssistantOrchestrator(
         phoneNumber: String,
         contactDisplayName: String,
         ownerDisplayName: String,
+        session: ScreeningSession? = null,
     ) {
-        scope.launch {
-            execute(phoneNumber, contactDisplayName, ownerDisplayName)
+        val activeSession = session ?: ScreeningSessionManager.createSession(
+            phoneNumber = phoneNumber,
+            displayLabel = contactDisplayName,
+            sessionType = ScreeningSessionType.KNOWN_ASSISTANT,
+            ownerDisplayName = ownerDisplayName,
+            contactDisplayName = contactDisplayName,
+        )
+
+        val job = scope.launch {
+            execute(phoneNumber, contactDisplayName, ownerDisplayName, activeSession)
         }
+        activeSession.attachPipelineJob(job)
     }
 
     private suspend fun execute(
         phoneNumber: String,
         contactDisplayName: String,
         ownerDisplayName: String,
+        session: ScreeningSession,
     ) {
         val timestamp = System.currentTimeMillis()
         var ttsText = ""
@@ -47,6 +59,7 @@ class KnownContactAssistantOrchestrator(
 
         try {
             audioFocusManager.enterCallAudioMode()
+            session.emit(ScreeningUiEvent.Status("Assistant answering for $ownerDisplayName"))
 
             if (!callControl.answerRingingCall()) {
                 Log.w(TAG, "Could not answer known contact for assistant")
@@ -57,11 +70,12 @@ class KnownContactAssistantOrchestrator(
                 "Can I take a message for them?"
 
             val result = conversationPipeline.run(
+                session = session,
                 mode = DialogMode.KNOWN_CONTACT_VOICEMAIL,
                 initialAiPrompt = greeting,
                 contactDisplayName = contactDisplayName,
                 ownerDisplayName = ownerDisplayName,
-                maxTurns = 2,
+                maxTurns = 3,
             )
 
             ttsText = result.allSpokenText
@@ -72,11 +86,27 @@ class KnownContactAssistantOrchestrator(
             thoughts = result.finalDecision.thoughts
             conversationJson = result.history.joinToString("\n") { "${it.role}: ${it.text}" }
 
+            if (result.endedByTakeover) {
+                return
+            }
+
             ttsEngine.speakToCall(result.finalDecision.replyToSpeak)
             callControl.endCall()
+            session.emit(
+                ScreeningUiEvent.SessionEnded(
+                    ScreeningUiEvent.EndReason.MESSAGE_TAKEN,
+                    "Message saved",
+                ),
+            )
         } catch (error: Exception) {
             Log.e(TAG, "Known contact assistant failed", error)
             thoughts = "Error: ${error.message}"
+            session.emit(
+                ScreeningUiEvent.SessionEnded(
+                    ScreeningUiEvent.EndReason.ERROR,
+                    error.message ?: "Error",
+                ),
+            )
         } finally {
             audioFocusManager.exitCallAudioMode()
             callLogRepository.persistScreeningEvent(
@@ -88,9 +118,10 @@ class KnownContactAssistantOrchestrator(
                 wasBlocked = false,
                 callRoute = CallRoute.KNOWN_CONTACT_NORMAL_RING.name,
                 conversationHistory = conversationJson,
-                wasConnectedToUser = false,
+                wasConnectedToUser = session.userTakeoverRequested,
                 leftMessage = leftMessage,
             )
+            ScreeningSessionManager.endSession(session.sessionId)
         }
     }
 
